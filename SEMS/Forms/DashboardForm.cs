@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 
 namespace SEMS.Forms
@@ -8,40 +9,41 @@ namespace SEMS.Forms
     public class DashboardForm : Form
     {
         private Panel sidebar, header, mainPanel, footer;
-        private Label lblTitle, lblTime, lblDate;
+        private Label lblTitle, lblTime, lblDate, lblWeather;
         private bool isDark = false;
 
         private Button btnDashboard, btnEmployees, btnRecycle;
+        private Timer clockTimer, refreshTimer;
+
+        // 🎨 Colors
+        private Color lightTotal = Color.FromArgb(77, 182, 172);
+        private Color lightActive = Color.FromArgb(102, 187, 106);
+        private Color lightDeleted = Color.FromArgb(239, 83, 80);
+
+        private Color darkBg = Color.FromArgb(18, 18, 18);
+        private Color darkCard = Color.FromArgb(30, 30, 30);
+        private Color darkText = Color.FromArgb(224, 224, 224);
 
         public DashboardForm(string role)
         {
-            // Build the UI
             InitializeUI(role);
-
-            // Start the clock (for time/date display)
             StartClock();
-
-            // ✅ Add auto-refresh timer for dashboard stats
-            Timer refreshTimer = new Timer();
-            refreshTimer.Interval = 5000; // every 5 seconds
-            refreshTimer.Tick += (s, e) =>
-            {
-                if (lblTitle.Text == "Dashboard")
-                    LoadDashboard();
-            };
-            refreshTimer.Start();
+            StartAutoRefresh();
         }
 
         private void InitializeUI(string role)
         {
             this.WindowState = FormWindowState.Maximized;
             this.Text = "SEMS Dashboard";
+            this.Font = new Font("Segoe UI", 10);
 
-            // ================= SIDEBAR =================
-            sidebar = new Panel();
-            sidebar.Width = 230;
-            sidebar.Dock = DockStyle.Left;
-            sidebar.BackColor = Color.FromArgb(30, 30, 30);
+            // ===== SIDEBAR =====
+            sidebar = new Panel
+            {
+                Width = 230,
+                Dock = DockStyle.Left,
+                BackColor = darkCard
+            };
 
             btnDashboard = CreateSidebarButton("📊 Dashboard", 0);
             btnEmployees = CreateSidebarButton("👨‍💼 Employees", 60);
@@ -51,72 +53,59 @@ namespace SEMS.Forms
             btnEmployees.Click += (s, e) => { Highlight(btnEmployees); LoadForm(new EmployeeForm(), "Employees"); };
             btnRecycle.Click += (s, e) => { Highlight(btnRecycle); LoadForm(new RecycleBinForm(), "Recycle Bin"); };
 
-            sidebar.Controls.Add(btnDashboard);
-            sidebar.Controls.Add(btnEmployees);
-            sidebar.Controls.Add(btnRecycle);
+            sidebar.Controls.AddRange(new Control[] { btnDashboard, btnEmployees, btnRecycle });
 
-            // ================= HEADER =================
-            header = new Panel();
-            header.Height = 70;
-            header.Dock = DockStyle.Top;
-            header.BackColor = Color.FromArgb(0, 120, 215);
+            // ===== HEADER =====
+            header = new Panel
+            {
+                Height = 70,
+                Dock = DockStyle.Top,
+                BackColor = Color.FromArgb(0, 120, 215)
+            };
 
-            lblTitle = new Label();
-            lblTitle.Text = "Dashboard";
-            lblTitle.ForeColor = Color.White;
-            lblTitle.Font = new Font("Segoe UI", 16, FontStyle.Bold);
-            lblTitle.Location = new Point(20, 20);
+            lblTitle = new Label
+            {
+                Text = "Dashboard",
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 16, FontStyle.Bold),
+                Location = new Point(20, 20),
+                AutoSize = true
+            };
 
-            // Profile Card
-            Panel profile = new Panel();
-            profile.Size = new Size(200, 50);
-            profile.Location = new Point(850, 10);
-            profile.BackColor = Color.FromArgb(0, 100, 200);
-
-            Label lblUser = new Label();
-            lblUser.Text = "👤 Admin";
-            lblUser.ForeColor = Color.White;
-            lblUser.Location = new Point(10, 15);
-
-            profile.Controls.Add(lblUser);
-
-            // Theme Button
-            Button btnTheme = new Button();
-            btnTheme.Text = "🌙";
-            btnTheme.Size = new Size(40, 30);
-            btnTheme.Location = new Point(1070, 20);
+            Button btnTheme = new Button
+            {
+                Text = "🌙",
+                Size = new Size(40, 30),
+                Location = new Point(1100, 20),
+                FlatStyle = FlatStyle.Flat
+            };
+            btnTheme.FlatAppearance.BorderSize = 0;
             btnTheme.Click += ToggleTheme;
 
             header.Controls.Add(lblTitle);
-            header.Controls.Add(profile);
             header.Controls.Add(btnTheme);
 
-            // ================= MAIN =================
-            mainPanel = new Panel();
-            mainPanel.Dock = DockStyle.Fill;
-            mainPanel.BackColor = Color.WhiteSmoke;
+            // ===== MAIN =====
+            mainPanel = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = Color.WhiteSmoke
+            };
 
-            // ================= FOOTER =================
-            footer = new Panel();
-            footer.Height = 40;
-            footer.Dock = DockStyle.Bottom;
-            footer.BackColor = Color.White;
+            // ===== FOOTER =====
+            footer = new Panel
+            {
+                Height = 40,
+                Dock = DockStyle.Bottom,
+                BackColor = Color.FromArgb(245, 245, 245)
+            };
 
-            lblTime = new Label();
-            lblTime.Location = new Point(20, 10);
+            lblTime = new Label { Location = new Point(20, 10), AutoSize = true };
+            lblDate = new Label { Location = new Point(150, 10), AutoSize = true };
+            lblWeather = new Label { Location = new Point(300, 10), AutoSize = true };
 
-            lblDate = new Label();
-            lblDate.Location = new Point(150, 10);
+            footer.Controls.AddRange(new Control[] { lblTime, lblDate, lblWeather });
 
-            Label lblWeather = new Label();
-            lblWeather.Text = "🌤 24°C Partly Cloudy";
-            lblWeather.Location = new Point(300, 10);
-
-            footer.Controls.Add(lblTime);
-            footer.Controls.Add(lblDate);
-            footer.Controls.Add(lblWeather);
-
-            // ADD CONTROLS
             this.Controls.Add(mainPanel);
             this.Controls.Add(header);
             this.Controls.Add(footer);
@@ -126,64 +115,61 @@ namespace SEMS.Forms
             LoadDashboard();
         }
 
-        // ================= SIDEBAR BUTTON =================
         private Button CreateSidebarButton(string text, int top)
         {
-            Button btn = new Button();
-            btn.Text = "   " + text;
-            btn.Width = 230;
-            btn.Height = 60;
-            btn.Location = new Point(0, top);
-
-            btn.FlatStyle = FlatStyle.Flat;
-            btn.ForeColor = Color.White;
-            btn.BackColor = Color.FromArgb(30, 30, 30);
-            btn.Font = new Font("Segoe UI Emoji", 11, FontStyle.Bold);
-            btn.TextAlign = ContentAlignment.MiddleLeft;
+            Button btn = new Button
+            {
+                Text = "   " + text,
+                Width = 230,
+                Height = 60,
+                Location = new Point(0, top),
+                FlatStyle = FlatStyle.Flat,
+                ForeColor = Color.Gainsboro,
+                BackColor = sidebar.BackColor,
+                Font = new Font("Segoe UI Emoji", 11, FontStyle.Bold),
+                TextAlign = ContentAlignment.MiddleLeft
+            };
 
             btn.FlatAppearance.BorderSize = 0;
 
             btn.MouseEnter += (s, e) =>
             {
-                if (btn.BackColor != Color.FromArgb(0, 120, 215))
-                    btn.BackColor = Color.FromArgb(50, 50, 50);
+                btn.BackColor = isDark ? Color.FromArgb(45, 45, 45) : Color.FromArgb(220, 220, 220);
             };
 
             btn.MouseLeave += (s, e) =>
             {
-                if (btn.BackColor != Color.FromArgb(0, 120, 215))
-                    btn.BackColor = Color.FromArgb(30, 30, 30);
+                if (btn != GetActiveButton())
+                    btn.BackColor = sidebar.BackColor;
             };
 
             return btn;
         }
 
-        // ================= ACTIVE HIGHLIGHT =================
+        private Button GetActiveButton()
+        {
+            foreach (Control c in sidebar.Controls)
+                if (c is Button btn && btn.BackColor == Color.FromArgb(0, 150, 136))
+                    return btn;
+
+            return null;
+        }
+
         private void Highlight(Button active)
         {
             foreach (Control c in sidebar.Controls)
             {
                 if (c is Button btn)
-                    btn.BackColor = Color.FromArgb(30, 30, 30);
+                {
+                    btn.BackColor = sidebar.BackColor;
+                    btn.ForeColor = Color.Gainsboro;
+                }
             }
 
-            active.BackColor = Color.FromArgb(0, 120, 215);
+            active.BackColor = Color.FromArgb(0, 150, 136);
+            active.ForeColor = Color.White;
         }
 
-        // ================= LOAD FORM =================
-        private void LoadForm(Form form, string title)
-        {
-            lblTitle.Text = title;
-            mainPanel.Controls.Clear();
-
-            form.TopLevel = false;
-            form.Dock = DockStyle.Fill;
-
-            mainPanel.Controls.Add(form);
-            form.Show();
-        }
-
-        // ================= DASHBOARD =================
         private void LoadDashboard()
         {
             lblTitle.Text = "Dashboard";
@@ -198,105 +184,138 @@ namespace SEMS.Forms
             double activePercent = total == 0 ? 0 : (active * 100.0 / total);
             double deletedPercent = total == 0 ? 0 : (deleted * 100.0 / total);
 
-            Panel card1 = CreateCard("👥 Total", total.ToString(), "100%", 100, Color.RoyalBlue, null);
-            Panel card2 = CreateCard("✅ Active", active.ToString(), $"{activePercent:0}%", 350, Color.SeaGreen, () =>
-            {
-                LoadForm(new EmployeeForm(), "Employees");
-            });
+            Color totalColor = isDark ? Color.FromArgb(38, 166, 154) : lightTotal;
+            Color activeColor = isDark ? Color.FromArgb(102, 187, 106) : lightActive;
+            Color deletedColor = isDark ? Color.FromArgb(239, 83, 80) : lightDeleted;
 
-            Panel card3 = CreateCard("🗑 Deleted", deleted.ToString(), $"{deletedPercent:0}%", 600, Color.IndianRed, () =>
-            {
-                LoadForm(new RecycleBinForm(), "Recycle Bin");
-            });
-
-            mainPanel.Controls.Add(card1);
-            mainPanel.Controls.Add(card2);
-            mainPanel.Controls.Add(card3);
+            mainPanel.Controls.Add(CreateCard("👥 Total", total.ToString(), 100, 100, totalColor));
+            mainPanel.Controls.Add(CreateCard("✅ Active", active.ToString(), activePercent, 380, activeColor));
+            mainPanel.Controls.Add(CreateCard("🗑 Deleted", deleted.ToString(), deletedPercent, 660, deletedColor));
         }
-        // ================= CARD =================
-        private Panel CreateCard(string title, string value, string percent, int left, Color color, Action onClick)
+
+        private Panel CreateCard(string title, string value, double percent, int left, Color color)
         {
-            Panel card = new Panel();
-            card.Size = new Size(250, 170); // ✅ increased height
-            card.Location = new Point(left, 100);
-            card.BackColor = color;
-            card.Cursor = Cursors.Hand;
-
-            Label lblTitle = new Label();
-            lblTitle.Text = title;
-            lblTitle.ForeColor = Color.White;
-            lblTitle.Font = new Font("Segoe UI", 11, FontStyle.Bold);
-            lblTitle.AutoSize = true;
-            lblTitle.Location = new Point(15, 15);
-
-            Label lblValue = new Label();
-            lblValue.Text = value;
-            lblValue.ForeColor = Color.White;
-            lblValue.Font = new Font("Segoe UI", 32, FontStyle.Bold); // ✅ bigger but safe
-            lblValue.AutoSize = true; // ✅ prevents clipping
-            lblValue.Location = new Point(15, 55);
-
-            Label lblPercent = new Label();
-            lblPercent.Text = percent;
-            lblPercent.ForeColor = Color.WhiteSmoke;
-            lblPercent.Font = new Font("Segoe UI", 10);
-            lblPercent.AutoSize = true;
-            lblPercent.Location = new Point(15, 120);
-
-            // Hover effect
-            card.MouseEnter += (s, e) => card.BackColor = ControlPaint.Light(color);
-            card.MouseLeave += (s, e) => card.BackColor = color;
-
-            // Click navigation
-            if (onClick != null)
+            Panel card = new Panel
             {
-                card.Click += (s, e) => onClick();
-                lblTitle.Click += (s, e) => onClick();
-                lblValue.Click += (s, e) => onClick();
-                lblPercent.Click += (s, e) => onClick();
-            }
+                Size = new Size(260, 180),
+                Location = new Point(left, 100),
+                BackColor = isDark ? darkCard : color
+            };
 
-            ToolTip tip = new ToolTip();
-            tip.SetToolTip(card, $"{title} Employees");
+            ApplyRoundedCorners(card, 20);
+
+            Color textColor = isDark ? darkText : Color.FromArgb(40, 40, 40);
+
+            Label lblTitle = new Label
+            {
+                Text = title,
+                ForeColor = textColor,
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                Location = new Point(12, 12),
+                AutoSize = true
+            };
+
+            Label lblValue = new Label
+            {
+                Text = value,
+                ForeColor = textColor,
+                Font = new Font("Segoe UI", 26, FontStyle.Bold),
+                Location = new Point(12, 45),
+                AutoSize = true
+            };
+
+            Label lblPercent = new Label
+            {
+                Text = $"{percent:0}%",
+                ForeColor = isDark ? Color.Gray : Color.DimGray,
+                Location = new Point(12, 90),
+                AutoSize = true
+            };
+
+            Panel track = new Panel
+            {
+                Location = new Point(12, 125),
+                Size = new Size(220, 10),
+                BackColor = isDark ? Color.FromArgb(44, 44, 44) : Color.FromArgb(230, 230, 230)
+            };
+
+            Panel fill = new Panel
+            {
+                Size = new Size((int)(220 * percent / 100), 10),
+                BackColor = color
+            };
+
+            track.Controls.Add(fill);
 
             card.Controls.Add(lblTitle);
             card.Controls.Add(lblValue);
             card.Controls.Add(lblPercent);
+            card.Controls.Add(track);
 
             return card;
         }
-        // ================= CLOCK =================
+
+        private void ApplyRoundedCorners(Control control, int radius)
+        {
+            GraphicsPath path = new GraphicsPath();
+            path.AddArc(0, 0, radius, radius, 180, 90);
+            path.AddArc(control.Width - radius, 0, radius, radius, 270, 90);
+            path.AddArc(control.Width - radius, control.Height - radius, radius, radius, 0, 90);
+            path.AddArc(0, control.Height - radius, radius, radius, 90, 90);
+            path.CloseAllFigures();
+            control.Region = new Region(path);
+        }
+
         private void StartClock()
         {
-            Timer timer = new Timer();
-            timer.Interval = 1000;
-
-            timer.Tick += (s, e) =>
+            clockTimer = new Timer { Interval = 1000 };
+            clockTimer.Tick += (s, e) =>
             {
                 lblTime.Text = DateTime.Now.ToString("hh:mm tt");
                 lblDate.Text = DateTime.Now.ToString("dd/MM/yyyy");
+                lblWeather.Text = DateTime.Now.Hour < 18 ? "☀ Sunny" : "🌙 Night";
             };
-
-            timer.Start();
+            clockTimer.Start();
         }
 
-        // ================= DARK MODE =================
+        private void StartAutoRefresh()
+        {
+            refreshTimer = new Timer { Interval = 5000 };
+            refreshTimer.Tick += (s, e) =>
+            {
+                if (lblTitle.Text == "Dashboard")
+                    LoadDashboard();
+            };
+            refreshTimer.Start();
+        }
+
         private void ToggleTheme(object sender, EventArgs e)
         {
             isDark = !isDark;
 
-            if (isDark)
-            {
-                mainPanel.BackColor = Color.FromArgb(45, 45, 45);
-                footer.BackColor = Color.FromArgb(30, 30, 30);
-                header.BackColor = Color.Black;
-            }
-            else
-            {
-                mainPanel.BackColor = Color.WhiteSmoke;
-                footer.BackColor = Color.White;
-                header.BackColor = Color.FromArgb(0, 120, 215);
-            }
+            this.BackColor = isDark ? darkBg : Color.White;
+            mainPanel.BackColor = isDark ? darkBg : Color.WhiteSmoke;
+            sidebar.BackColor = isDark ? darkCard : Color.FromArgb(240, 240, 240);
+            footer.BackColor = isDark ? darkCard : Color.FromArgb(245, 245, 245);
+
+            lblTitle.ForeColor = isDark ? darkText : Color.White;
+            lblTime.ForeColor = isDark ? darkText : Color.Black;
+            lblDate.ForeColor = isDark ? darkText : Color.Black;
+            lblWeather.ForeColor = isDark ? darkText : Color.Black;
+
+            LoadDashboard();
+        }
+
+        private void LoadForm(Form form, string title)
+        {
+            lblTitle.Text = title;
+            mainPanel.Controls.Clear();
+
+            form.TopLevel = false;
+            form.Dock = DockStyle.Fill;
+
+            mainPanel.Controls.Add(form);
+            form.Show();
         }
     }
 }
