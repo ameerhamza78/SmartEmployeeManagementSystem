@@ -68,7 +68,7 @@ SEMS/
 ---
 
 ### Employee Management
-![Employee Management](SEMS/screenshots/employees.png)
+![Employee Management](SEMS/screenshots/employee.png)
 
 ---
 
