@@ -59,7 +59,7 @@ namespace SEMS.Forms
             btnRecycle = CreateSidebarButton("♻ Recycle Bin", 120);
 
             btnDashboard.Click += (s, e) => { SetActive(btnDashboard); LoadDashboard(); };
-            btnEmployees.Click += (s, e) => { SetActive(btnEmployees); LoadForm(new EmployeeForm(), "Employees"); };
+            btnEmployees.Click += (s, e) => { SetActive(btnEmployees); LoadForm(new EmployeeForm(isDark), "Employees"); };
             btnRecycle.Click += (s, e) => { SetActive(btnRecycle); LoadForm(new RecycleBinForm(), "Recycle Bin"); };
 
             sidebar.Controls.AddRange(new Control[] { btnDashboard, btnEmployees, btnRecycle });
