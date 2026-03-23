@@ -60,27 +60,27 @@ SEMS/
 > 📌 Add your images inside the `screenshots/` folder and link them like below:
 
 ### Login Screen
-![Login Screen](screenshots/login.png)
+![Login Screen](SEMS/screenshots/login.png)
 
 ---
 
 ### Dashboard
-![Dashboard](screenshots/dashboard.png)
+![Dashboard](SEMS/screenshots/dashboard.png)
 
 ---
 
 ### Employee Management
-![Employee Management](screenshots/employees.png)
+![Employee Management](SEMS/screenshots/employees.png)
 
 ---
 
 ### Recycle Bin
-![Recycle Bin](screenshots/recyclebin.png)
+![Recycle Bin](SEMS/screenshots/recyclebin.png)
 
 ---
 
 ### Dark Mode
-![Dark Mode](screenshots/darkmode.png)
+![Dark Mode](SEMS/screenshots/darkmode.png)
 
 ---
 
