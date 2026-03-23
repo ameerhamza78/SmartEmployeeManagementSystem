@@ -15,14 +15,23 @@ namespace SEMS.Forms
         private Button btnDashboard, btnEmployees, btnRecycle;
         private Timer clockTimer, refreshTimer;
 
-        // 🎨 Colors
+        // 🎨 LIGHT COLORS
+        private Color lightSidebar = Color.FromArgb(245, 245, 245);
+        private Color lightHover = Color.FromArgb(224, 224, 224);
+        private Color lightText = Color.FromArgb(51, 51, 51);
+
         private Color lightTotal = Color.FromArgb(77, 182, 172);
         private Color lightActive = Color.FromArgb(102, 187, 106);
         private Color lightDeleted = Color.FromArgb(239, 83, 80);
 
+        // 🎨 DARK COLORS
         private Color darkBg = Color.FromArgb(18, 18, 18);
         private Color darkCard = Color.FromArgb(30, 30, 30);
         private Color darkText = Color.FromArgb(224, 224, 224);
+        private Color darkHover = Color.FromArgb(44, 44, 44);
+
+        // 🎯 ACCENT
+        private Color accent = Color.FromArgb(63, 81, 181);
 
         public DashboardForm(string role)
         {
@@ -49,9 +58,9 @@ namespace SEMS.Forms
             btnEmployees = CreateSidebarButton("👨‍💼 Employees", 60);
             btnRecycle = CreateSidebarButton("♻ Recycle Bin", 120);
 
-            btnDashboard.Click += (s, e) => { Highlight(btnDashboard); LoadDashboard(); };
-            btnEmployees.Click += (s, e) => { Highlight(btnEmployees); LoadForm(new EmployeeForm(), "Employees"); };
-            btnRecycle.Click += (s, e) => { Highlight(btnRecycle); LoadForm(new RecycleBinForm(), "Recycle Bin"); };
+            btnDashboard.Click += (s, e) => { SetActive(btnDashboard); LoadDashboard(); };
+            btnEmployees.Click += (s, e) => { SetActive(btnEmployees); LoadForm(new EmployeeForm(), "Employees"); };
+            btnRecycle.Click += (s, e) => { SetActive(btnRecycle); LoadForm(new RecycleBinForm(), "Recycle Bin"); };
 
             sidebar.Controls.AddRange(new Control[] { btnDashboard, btnEmployees, btnRecycle });
 
@@ -111,10 +120,11 @@ namespace SEMS.Forms
             this.Controls.Add(footer);
             this.Controls.Add(sidebar);
 
-            Highlight(btnDashboard);
+            SetActive(btnDashboard);
             LoadDashboard();
         }
 
+        // ================= SIDEBAR BUTTON =================
         private Button CreateSidebarButton(string text, int top)
         {
             Button btn = new Button
@@ -124,8 +134,6 @@ namespace SEMS.Forms
                 Height = 60,
                 Location = new Point(0, top),
                 FlatStyle = FlatStyle.Flat,
-                ForeColor = Color.Gainsboro,
-                BackColor = sidebar.BackColor,
                 Font = new Font("Segoe UI Emoji", 11, FontStyle.Bold),
                 TextAlign = ContentAlignment.MiddleLeft
             };
@@ -134,7 +142,8 @@ namespace SEMS.Forms
 
             btn.MouseEnter += (s, e) =>
             {
-                btn.BackColor = isDark ? Color.FromArgb(45, 45, 45) : Color.FromArgb(220, 220, 220);
+                if (btn != GetActiveButton())
+                    btn.BackColor = isDark ? darkHover : lightHover;
             };
 
             btn.MouseLeave += (s, e) =>
@@ -146,30 +155,33 @@ namespace SEMS.Forms
             return btn;
         }
 
-        private Button GetActiveButton()
-        {
-            foreach (Control c in sidebar.Controls)
-                if (c is Button btn && btn.BackColor == Color.FromArgb(0, 150, 136))
-                    return btn;
-
-            return null;
-        }
-
-        private void Highlight(Button active)
+        private void SetActive(Button active)
         {
             foreach (Control c in sidebar.Controls)
             {
                 if (c is Button btn)
                 {
                     btn.BackColor = sidebar.BackColor;
-                    btn.ForeColor = Color.Gainsboro;
+                    btn.ForeColor = isDark ? Color.Gainsboro : lightText;
+                    btn.Padding = new Padding(10, 0, 0, 0);
                 }
             }
 
-            active.BackColor = Color.FromArgb(0, 150, 136);
+            active.BackColor = accent;
             active.ForeColor = Color.White;
+            active.Padding = new Padding(20, 0, 0, 0);
         }
 
+        private Button GetActiveButton()
+        {
+            foreach (Control c in sidebar.Controls)
+                if (c is Button btn && btn.BackColor == accent)
+                    return btn;
+
+            return null;
+        }
+
+        // ================= DASHBOARD =================
         private void LoadDashboard()
         {
             lblTitle.Text = "Dashboard";
@@ -184,7 +196,7 @@ namespace SEMS.Forms
             double activePercent = total == 0 ? 0 : (active * 100.0 / total);
             double deletedPercent = total == 0 ? 0 : (deleted * 100.0 / total);
 
-            Color totalColor = isDark ? Color.FromArgb(38, 166, 154) : lightTotal;
+            Color totalColor = isDark ? Color.FromArgb(77, 182, 172) : lightTotal;
             Color activeColor = isDark ? Color.FromArgb(102, 187, 106) : lightActive;
             Color deletedColor = isDark ? Color.FromArgb(239, 83, 80) : lightDeleted;
 
@@ -224,14 +236,6 @@ namespace SEMS.Forms
                 AutoSize = true
             };
 
-            Label lblPercent = new Label
-            {
-                Text = $"{percent:0}%",
-                ForeColor = isDark ? Color.Gray : Color.DimGray,
-                Location = new Point(12, 90),
-                AutoSize = true
-            };
-
             Panel track = new Panel
             {
                 Location = new Point(12, 125),
@@ -249,7 +253,6 @@ namespace SEMS.Forms
 
             card.Controls.Add(lblTitle);
             card.Controls.Add(lblValue);
-            card.Controls.Add(lblPercent);
             card.Controls.Add(track);
 
             return card;
@@ -266,13 +269,14 @@ namespace SEMS.Forms
             control.Region = new Region(path);
         }
 
+        // ================= CLOCK =================
         private void StartClock()
         {
             clockTimer = new Timer { Interval = 1000 };
             clockTimer.Tick += (s, e) =>
             {
-                lblTime.Text = DateTime.Now.ToString("hh:mm tt");
-                lblDate.Text = DateTime.Now.ToString("dd/MM/yyyy");
+                lblTime.Text = "🕒 " + DateTime.Now.ToString("hh:mm tt");
+                lblDate.Text = "📅 " + DateTime.Now.ToString("dd/MM/yyyy");
                 lblWeather.Text = DateTime.Now.Hour < 18 ? "☀ Sunny" : "🌙 Night";
             };
             clockTimer.Start();
@@ -289,20 +293,22 @@ namespace SEMS.Forms
             refreshTimer.Start();
         }
 
+        // ================= THEME =================
         private void ToggleTheme(object sender, EventArgs e)
         {
             isDark = !isDark;
 
             this.BackColor = isDark ? darkBg : Color.White;
             mainPanel.BackColor = isDark ? darkBg : Color.WhiteSmoke;
-            sidebar.BackColor = isDark ? darkCard : Color.FromArgb(240, 240, 240);
+            sidebar.BackColor = isDark ? darkCard : lightSidebar;
             footer.BackColor = isDark ? darkCard : Color.FromArgb(245, 245, 245);
 
             lblTitle.ForeColor = isDark ? darkText : Color.White;
-            lblTime.ForeColor = isDark ? darkText : Color.Black;
-            lblDate.ForeColor = isDark ? darkText : Color.Black;
-            lblWeather.ForeColor = isDark ? darkText : Color.Black;
+            lblTime.ForeColor = isDark ? darkText : Color.FromArgb(50, 50, 50);
+            lblDate.ForeColor = isDark ? darkText : Color.FromArgb(50, 50, 50);
+            lblWeather.ForeColor = isDark ? darkText : Color.FromArgb(50, 50, 50);
 
+            SetActive(GetActiveButton() ?? btnDashboard);
             LoadDashboard();
         }
 

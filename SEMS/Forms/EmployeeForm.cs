@@ -10,15 +10,19 @@ namespace SEMS.Forms
     public partial class EmployeeForm : Form
     {
         private DataGridView dgv;
+        private Panel inputPanel;
+
         private TextBox txtName, txtDept, txtSalary;
         private DateTimePicker dtJoining;
         private PictureBox pic;
-        private Button btnAdd, btnUpdate, btnDelete, btnUpload;
+
+        private Button btnAdd, btnUpdate, btnDelete, btnUpload, btnExport, btnClear;
+
         private TextBox txtSearch;
         private ComboBox cmbFilter;
 
         private List<Employee> employees;
-        private int selectedIndex = -1;
+        private int selectedId = -1;
 
         public EmployeeForm()
         {
@@ -27,17 +31,87 @@ namespace SEMS.Forms
             RefreshGrid();
         }
 
+        // ================= UI =================
         private void InitializeUI()
         {
             this.Dock = DockStyle.Fill;
+            this.BackColor = Color.FromArgb(30, 30, 30);
 
-            // ================= TABLE =================
+            CreateInputPanel();
+            CreateGrid();
+            CreateTopBar();
+        }
+
+        // ================= INPUT PANEL =================
+        private void CreateInputPanel()
+        {
+            inputPanel = new Panel();
+            inputPanel.Size = new Size(300, 600);
+            inputPanel.Dock = DockStyle.Left;
+            inputPanel.BackColor = Color.FromArgb(40, 40, 40);
+
+            Label title = new Label()
+            {
+                Text = "Employee Details",
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 12, FontStyle.Bold),
+                Location = new Point(20, 20)
+            };
+
+            txtName = CreateInput("Full Name", 60);
+            txtDept = CreateInput("Department", 110);
+            txtSalary = CreateInput("Salary", 160);
+
+            dtJoining = new DateTimePicker()
+            {
+                Location = new Point(20, 210),
+                Width = 250
+            };
+
+            pic = new PictureBox()
+            {
+                Size = new Size(120, 120),
+                Location = new Point(20, 260),
+                BorderStyle = BorderStyle.FixedSingle,
+                SizeMode = PictureBoxSizeMode.StretchImage
+            };
+
+            btnUpload = CreateButton("Upload Image", 20, 390);
+            btnUpload.Click += UploadImage;
+
+            btnAdd = CreateButton("Add", 20, 440);
+            btnUpdate = CreateButton("Update", 120, 440);
+            btnDelete = CreateButton("Delete", 20, 490);
+            btnClear = CreateButton("Clear", 120, 490);
+
+            btnAdd.Click += AddEmployee;
+            btnUpdate.Click += UpdateEmployee;
+            btnDelete.Click += DeleteEmployee;
+            btnClear.Click += (s, e) => ClearFields();
+
+            inputPanel.Controls.Add(title);
+            inputPanel.Controls.Add(txtName);
+            inputPanel.Controls.Add(txtDept);
+            inputPanel.Controls.Add(txtSalary);
+            inputPanel.Controls.Add(dtJoining);
+            inputPanel.Controls.Add(pic);
+            inputPanel.Controls.Add(btnUpload);
+            inputPanel.Controls.Add(btnAdd);
+            inputPanel.Controls.Add(btnUpdate);
+            inputPanel.Controls.Add(btnDelete);
+            inputPanel.Controls.Add(btnClear);
+
+            this.Controls.Add(inputPanel);
+        }
+
+        // ================= GRID =================
+        private void CreateGrid()
+        {
             dgv = new DataGridView();
-            dgv.Size = new Size(600, 300);
-            dgv.Location = new Point(20, 20);
+            dgv.Dock = DockStyle.Fill;
+            dgv.ReadOnly = true;
             dgv.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgv.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-            dgv.ReadOnly = true;
 
             dgv.Columns.Add("Id", "ID");
             dgv.Columns.Add("Name", "Name");
@@ -46,129 +120,64 @@ namespace SEMS.Forms
 
             dgv.CellClick += Dgv_CellClick;
 
-            // ================= INPUTS =================
-            txtName = CreateTextBox("Name", 350);
-            txtDept = CreateTextBox("Department", 390);
-            txtSalary = CreateTextBox("Salary", 430);
+            dgv.BackgroundColor = Color.FromArgb(30, 30, 30);
+            dgv.EnableHeadersVisualStyles = false;
 
-            dtJoining = new DateTimePicker();
-            dtJoining.Location = new Point(20, 470);
-            dtJoining.Size = new Size(200, 25);
+            dgv.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(45, 45, 48);
+            dgv.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
 
-            // ================= IMAGE =================
-            pic = new PictureBox();
-            pic.Size = new Size(120, 120);
-            pic.Location = new Point(650, 20);
-            pic.BorderStyle = BorderStyle.FixedSingle;
-            pic.SizeMode = PictureBoxSizeMode.StretchImage;
+            dgv.DefaultCellStyle.BackColor = Color.FromArgb(30, 30, 30);
+            dgv.DefaultCellStyle.ForeColor = Color.White;
 
-            btnUpload = new Button();
-            btnUpload.Text = "Upload Image";
-            btnUpload.Location = new Point(650, 150);
-            btnUpload.Click += UploadImage;
+            dgv.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(37, 37, 38);
 
-            // ================= BUTTONS =================
-            btnAdd = CreateButton("Add", 20, 520);
-            btnUpdate = CreateButton("Update", 120, 520);
-            btnDelete = CreateButton("Delete", 220, 520);
-
-            btnAdd.Click += AddEmployee;
-            btnUpdate.Click += UpdateEmployee;
-            btnDelete.Click += DeleteEmployee;
-
-
-
-            // ================= SEARCH BOX =================
-            txtSearch = new TextBox();
-            txtSearch.Text = "Search...";
-            txtSearch.ForeColor = Color.Gray;
-            txtSearch.Location = new Point(250, 350);
-            txtSearch.Width = 200;
-
-            txtSearch.GotFocus += (s, e) =>
-            {
-                if (txtSearch.Text == "Search...")
-                {
-                    txtSearch.Text = "";
-                    txtSearch.ForeColor = Color.Black;
-                }
-            };
-
-            txtSearch.LostFocus += (s, e) =>
-            {
-                if (string.IsNullOrWhiteSpace(txtSearch.Text))
-                {
-                    txtSearch.Text = "Search...";
-                    txtSearch.ForeColor = Color.Gray;
-                }
-            };
-
-            txtSearch.TextChanged += (s, e) =>
-            {
-                string keyword = txtSearch.Text.ToLower();
-                dgv.Rows.Clear();
-
-                foreach (var emp in employees)
-                {
-                    if (!emp.IsDeleted && emp.Name.ToLower().Contains(keyword))
-                    {
-                        dgv.Rows.Add(emp.Id, emp.Name, emp.Department, emp.Salary);
-                    }
-                }
-            };
-
-            // ================= FILTER COMBOBOX =================
-            cmbFilter = new ComboBox();
-            cmbFilter.Location = new Point(470, 350);
-            cmbFilter.Width = 150;
-
-            cmbFilter.Items.Add("All");
-            cmbFilter.Items.Add("HR");
-            cmbFilter.Items.Add("IT");
-            cmbFilter.Items.Add("Finance");
-
-            cmbFilter.SelectedIndex = 0;
-
-            cmbFilter.SelectedIndexChanged += (s, e) =>
-            {
-                string selected = cmbFilter.SelectedItem.ToString();
-                dgv.Rows.Clear();
-
-                foreach (var emp in employees)
-                {
-                    if (!emp.IsDeleted)
-                    {
-                        if (selected == "All" || emp.Department == selected)
-                        {
-                            dgv.Rows.Add(emp.Id, emp.Name, emp.Department, emp.Salary);
-                        }
-                    }
-                }
-            };
-
-            // Add Controls
             this.Controls.Add(dgv);
-            this.Controls.Add(txtName);
-            this.Controls.Add(txtDept);
-            this.Controls.Add(txtSalary);
-            this.Controls.Add(dtJoining);
-            this.Controls.Add(pic);
-            this.Controls.Add(btnUpload);
-            this.Controls.Add(btnAdd);
-            this.Controls.Add(btnUpdate);
-            this.Controls.Add(btnDelete);
-            this.Controls.Add(txtSearch);
-            this.Controls.Add(cmbFilter);
         }
 
-        // ================= HELPERS =================
-        private TextBox CreateTextBox(string placeholder, int top)
+        // ================= TOP BAR =================
+        private void CreateTopBar()
+        {
+            Panel top = new Panel();
+            top.Dock = DockStyle.Top;
+            top.Height = 50;
+            top.BackColor = Color.FromArgb(45, 45, 48);
+
+            txtSearch = new TextBox()
+            {
+                Width = 200,
+                Location = new Point(20, 10)
+            };
+
+            txtSearch.TextChanged += (s, e) => RefreshGrid();
+
+            cmbFilter = new ComboBox()
+            {
+                Location = new Point(250, 10),
+                Width = 150
+            };
+
+            cmbFilter.Items.AddRange(new string[] { "All", "HR", "IT", "Finance" });
+            cmbFilter.SelectedIndex = 0;
+            cmbFilter.SelectedIndexChanged += (s, e) => RefreshGrid();
+
+            btnExport = CreateButton("Export CSV", 420, 10);
+            btnExport.Click += ExportToCSV;
+
+            top.Controls.Add(txtSearch);
+            top.Controls.Add(cmbFilter);
+            top.Controls.Add(btnExport);
+
+            this.Controls.Add(top);
+        }
+
+        // ================= PLACEHOLDER INPUT =================
+        private TextBox CreateInput(string placeholder, int top)
         {
             TextBox txt = new TextBox();
             txt.Text = placeholder;
             txt.ForeColor = Color.Gray;
             txt.Location = new Point(20, top);
-            txt.Size = new Size(200, 25);
+            txt.Width = 250;
 
             txt.GotFocus += (s, e) =>
             {
@@ -191,41 +200,33 @@ namespace SEMS.Forms
             return txt;
         }
 
+        // ================= BUTTON =================
         private Button CreateButton(string text, int left, int top)
         {
-            Button btn = new Button();
-            btn.Text = text;
-            btn.Location = new Point(left, top);
-            btn.Size = new Size(80, 35);
-            btn.BackColor = Color.FromArgb(0, 120, 215);
-            btn.ForeColor = Color.White;
-            btn.FlatStyle = FlatStyle.Flat;
-            return btn;
+            return new Button()
+            {
+                Text = text,
+                Location = new Point(left, top),
+                Size = new Size(120, 35),
+                BackColor = Color.FromArgb(63, 81, 181),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat
+            };
         }
 
         // ================= EVENTS =================
         private void AddEmployee(object sender, EventArgs e)
         {
-            if (txtName.Text == "Name" || txtDept.Text == "Department" || txtSalary.Text == "Salary")
-            {
-                MessageBox.Show("Please fill all fields!");
-                return;
-            }
-
-            if (!double.TryParse(txtSalary.Text, out double salary))
-            {
-                MessageBox.Show("Invalid Salary!");
-                return;
-            }
+            if (!ValidateInputs()) return;
 
             Employee emp = new Employee()
             {
                 Id = employees.Count + 1,
                 Name = txtName.Text,
                 Department = txtDept.Text,
-                Salary = salary,
+                Salary = double.Parse(txtSalary.Text),
                 JoiningDate = dtJoining.Value,
-                ImagePath = "",   // ✅ initialize
+                ImagePath = "",
                 IsDeleted = false
             };
 
@@ -234,105 +235,138 @@ namespace SEMS.Forms
 
             RefreshGrid();
             ClearFields();
-
-            MessageBox.Show("Employee Added Successfully!");
         }
 
         private void UpdateEmployee(object sender, EventArgs e)
         {
-            if (selectedIndex < 0) return;
+            var emp = employees.FirstOrDefault(x => x.Id == selectedId);
+            if (emp == null) return;
 
-            employees[selectedIndex].Name = txtName.Text;
-            employees[selectedIndex].Department = txtDept.Text;
-            employees[selectedIndex].Salary = double.Parse(txtSalary.Text);
-            employees[selectedIndex].JoiningDate = dtJoining.Value;
+            if (!ValidateInputs()) return;
+
+            emp.Name = txtName.Text;
+            emp.Department = txtDept.Text;
+            emp.Salary = double.Parse(txtSalary.Text);
+            emp.JoiningDate = dtJoining.Value;
 
             SEMS.Data.FileHandler.Save(employees);
             RefreshGrid();
-            ClearFields();
-
-            MessageBox.Show("Employee Updated Successfully!");
         }
 
         private void DeleteEmployee(object sender, EventArgs e)
         {
-            if (selectedIndex < 0) return;
+            var emp = employees.FirstOrDefault(x => x.Id == selectedId);
+            if (emp == null) return;
 
-            employees[selectedIndex].IsDeleted = true;
+            emp.IsDeleted = true;
 
             SEMS.Data.FileHandler.Save(employees);
             RefreshGrid();
-            ClearFields();
-
-            MessageBox.Show("Employee moved to Recycle Bin!");
         }
 
         private void Dgv_CellClick(object sender, DataGridViewCellEventArgs e)
         {
-            selectedIndex = e.RowIndex;
+            if (e.RowIndex < 0) return;
 
-            if (selectedIndex >= 0 && selectedIndex < employees.Count)
-            {
-                txtName.Text = employees[selectedIndex].Name;
-                txtDept.Text = employees[selectedIndex].Department;
-                txtSalary.Text = employees[selectedIndex].Salary.ToString();
-                dtJoining.Value = employees[selectedIndex].JoiningDate;
+            selectedId = Convert.ToInt32(dgv.Rows[e.RowIndex].Cells[0].Value);
 
-                // ✅ Load profile picture
-                if (!string.IsNullOrEmpty(employees[selectedIndex].ImagePath)
-                    && System.IO.File.Exists(employees[selectedIndex].ImagePath))
-                {
-                    pic.Image = Image.FromFile(employees[selectedIndex].ImagePath);
-                }
-                else
-                {
-                    pic.Image = null;
-                }
-            }
+            var emp = employees.FirstOrDefault(x => x.Id == selectedId);
+            if (emp == null) return;
+
+            txtName.Text = emp.Name;
+            txtDept.Text = emp.Department;
+            txtSalary.Text = emp.Salary.ToString();
+            dtJoining.Value = emp.JoiningDate;
         }
 
         private void UploadImage(object sender, EventArgs e)
         {
             OpenFileDialog ofd = new OpenFileDialog();
-            ofd.Filter = "Images|*.jpg;*.png;*.jpeg;*.bmp";
 
             if (ofd.ShowDialog() == DialogResult.OK)
             {
                 pic.Image = Image.FromFile(ofd.FileName);
 
-                // ✅ Save path to selected employee
-                if (selectedIndex >= 0 && selectedIndex < employees.Count)
+                var emp = employees.FirstOrDefault(x => x.Id == selectedId);
+                if (emp != null)
                 {
-                    employees[selectedIndex].ImagePath = ofd.FileName;
+                    emp.ImagePath = ofd.FileName;
                     SEMS.Data.FileHandler.Save(employees);
                 }
             }
         }
 
+        private void ExportToCSV(object sender, EventArgs e)
+        {
+            SaveFileDialog sfd = new SaveFileDialog();
+            sfd.Filter = "CSV File|*.csv";
+
+            if (sfd.ShowDialog() == DialogResult.OK)
+            {
+                using (var sw = new System.IO.StreamWriter(sfd.FileName))
+                {
+                    sw.WriteLine("Id,Name,Department,Salary");
+
+                    foreach (var emp in employees.Where(x => !x.IsDeleted))
+                    {
+                        sw.WriteLine($"{emp.Id},{emp.Name},{emp.Department},{emp.Salary}");
+                    }
+                }
+
+                MessageBox.Show("Exported Successfully!");
+            }
+        }
+
+        // ================= CORE =================
         private void RefreshGrid()
         {
             dgv.Rows.Clear();
+
+            string search = txtSearch.Text.ToLower();
+            string filter = cmbFilter.SelectedItem.ToString();
 
             foreach (var emp in employees)
             {
                 if (!emp.IsDeleted)
                 {
-                    dgv.Rows.Add(emp.Id, emp.Name, emp.Department, emp.Salary);
+                    if ((filter == "All" || emp.Department == filter) &&
+                        (string.IsNullOrEmpty(search) || emp.Name.ToLower().Contains(search)))
+                    {
+                        dgv.Rows.Add(emp.Id, emp.Name, emp.Department, emp.Salary);
+                    }
                 }
             }
+        }
 
-            // Reset picture when grid refreshes
-            pic.Image = null;
+        private bool ValidateInputs()
+        {
+            if (string.IsNullOrWhiteSpace(txtName.Text) ||
+                string.IsNullOrWhiteSpace(txtDept.Text) ||
+                string.IsNullOrWhiteSpace(txtSalary.Text))
+            {
+                MessageBox.Show("All fields are required!");
+                return false;
+            }
+
+            if (!double.TryParse(txtSalary.Text, out _))
+            {
+                MessageBox.Show("Invalid Salary!");
+                return false;
+            }
+
+            return true;
         }
 
         private void ClearFields()
         {
-            txtName.Text = "Name";
+            txtName.Text = "Full Name";
             txtDept.Text = "Department";
             txtSalary.Text = "Salary";
+            txtName.ForeColor = txtDept.ForeColor = txtSalary.ForeColor = Color.Gray;
+
             dtJoining.Value = DateTime.Now;
             pic.Image = null;
-            selectedIndex = -1;
+            selectedId = -1;
         }
     }
 }
