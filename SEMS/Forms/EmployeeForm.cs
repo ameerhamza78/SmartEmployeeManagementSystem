@@ -29,11 +29,13 @@ namespace SEMS.Forms
 
         private bool isDark = false;
 
-        public EmployeeForm(bool darkMode = false)
+        public EmployeeForm(bool isDark)
         {
-            isDark = darkMode;
+            this.isDark = isDark;
 
             InitializeUI();
+            ApplyTheme();   // ✅ ADD THIS LINE HERE
+
             employees = SEMS.Data.FileHandler.Load();
             RefreshGrid();
         }
@@ -382,7 +384,47 @@ namespace SEMS.Forms
 
             return true;
         }
+        private void ApplyTheme()
+        {
+            if (isDark)
+            {
+                this.BackColor = Color.FromArgb(30, 30, 30);
 
+                inputPanel.BackColor = Color.FromArgb(45, 45, 48);
+                topPanel.BackColor = Color.FromArgb(45, 45, 48);
+
+                dgv.BackgroundColor = Color.FromArgb(30, 30, 30);
+                dgv.DefaultCellStyle.BackColor = Color.FromArgb(30, 30, 30);
+                dgv.DefaultCellStyle.ForeColor = Color.White;
+
+                dgv.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(45, 45, 48);
+                dgv.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
+
+                txtName.BackColor = Color.FromArgb(60, 60, 60);
+                txtDept.BackColor = Color.FromArgb(60, 60, 60);
+                txtSalary.BackColor = Color.FromArgb(60, 60, 60);
+                txtSearch.BackColor = Color.FromArgb(60, 60, 60);
+
+                txtName.ForeColor = Color.White;
+                txtDept.ForeColor = Color.White;
+                txtSalary.ForeColor = Color.White;
+                txtSearch.ForeColor = Color.White;
+            }
+            else
+            {
+                this.BackColor = Color.White;
+
+                inputPanel.BackColor = SystemColors.Control;
+                topPanel.BackColor = SystemColors.Control;
+
+                dgv.BackgroundColor = Color.White;
+                dgv.DefaultCellStyle.BackColor = Color.White;
+                dgv.DefaultCellStyle.ForeColor = Color.Black;
+
+                dgv.ColumnHeadersDefaultCellStyle.BackColor = Color.LightGray;
+                dgv.ColumnHeadersDefaultCellStyle.ForeColor = Color.Black;
+            }
+        }
         private void ClearFields()
         {
             txtName.Text = "Full Name";
