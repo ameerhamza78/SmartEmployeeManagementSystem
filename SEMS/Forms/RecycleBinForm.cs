@@ -54,7 +54,7 @@ namespace SEMS.Forms
 
             btnRestore = CreateButton("Restore", 20, 10, Color.FromArgb(76, 175, 80));
             btnDeletePermanent = CreateButton("Delete Permanently", 200, 10, Color.FromArgb(244, 67, 54));
-            btnClearAll = CreateButton("Clear All", 380, 10, Color.FromArgb(255, 152, 0));a
+            btnClearAll = CreateButton("Clear All", 380, 10, Color.FromArgb(255, 152, 0));
 
             btnRestore.Click += RestoreEmployee;
             btnDeletePermanent.Click += DeletePermanent;
