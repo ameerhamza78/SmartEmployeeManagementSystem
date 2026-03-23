@@ -47,7 +47,7 @@ SEMS/
 │
 │── Resources/
 │
-│── screenshots/ (Place all your screenshots here)
+│── screenshots/ 
 │
 │── App.config
 │── Program.cs
@@ -56,8 +56,6 @@ SEMS/
 ---
 
 ## 📸 Screenshots
-
-> 📌 Add your images inside the `screenshots/` folder and link them like below:
 
 ### Login Screen
 ![Login Screen](SEMS/screenshots/login.png)
