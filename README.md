@@ -111,5 +111,3 @@ This project is for **educational purposes only**.
 
 **Muhammad Ameer Hamza**  
 BSCS-VI-B  
-
-## 📂 Project Structure
