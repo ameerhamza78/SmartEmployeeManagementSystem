@@ -15,7 +15,7 @@ SEMS provides efficient employee record management, analytics, soft delete with 
 - Soft Delete & Restore (Recycle Bin)  
 - Theme Switcher (Dark/Light Mode)  
 - Notification System  
-- Role-based Login & Authorization  
+- Login & Authorization  
 - Joining Date Tracking  
 
 ---
